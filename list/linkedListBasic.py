@@ -143,3 +143,11 @@ class LinkedListBasic:
             return item
         else:
             raise StopIteration        
+        
+    def __next__(self):
+        if self.__iter_node is not None:
+            item = self.__iter_node.item
+            self.__iter_node = self.__iter_node.next
+            return item
+        else:
+            raise StopIteration
