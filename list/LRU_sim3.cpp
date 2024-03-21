@@ -7,13 +7,11 @@ typedef struct Node {
     struct Node *next;
 } Node;
 
-// Define Circular Linked List
 typedef struct CircularLinkedList {
     Node *head;
     int size;
 } CircularLinkedList;
 
-// Initialize Circular Linked List
 CircularLinkedList *initializeList() {
     CircularLinkedList *list = (CircularLinkedList *)malloc(sizeof(CircularLinkedList));
     list->head = NULL;
@@ -21,7 +19,6 @@ CircularLinkedList *initializeList() {
     return list;
 }
 
-// Append to Circular Linked List
 void append(CircularLinkedList *list, char *item) {
     Node *newNode = (Node *)malloc(sizeof(Node));
     newNode->item = strdup(item);
@@ -40,7 +37,6 @@ void append(CircularLinkedList *list, char *item) {
     list->size++;
 }
 
-// Remove from Circular Linked List
 void removeItem(CircularLinkedList *list, char *item) {
     if (list->head == NULL)
         return;
@@ -76,7 +72,6 @@ void removeItem(CircularLinkedList *list, char *item) {
     } while (current != list->head);
 }
 
-// Get index of item in Circular Linked List
 int indexOf(CircularLinkedList *list, char *item) {
     if (list->head == NULL)
         return -2;
@@ -94,12 +89,10 @@ int indexOf(CircularLinkedList *list, char *item) {
     return -2;
 }
 
-// Get size of Circular Linked List
 int size(CircularLinkedList *list) {
     return list->size;
 }
 
-// Destroy Circular Linked List
 void destroyList(CircularLinkedList *list) {
     Node *current = list->head;
     Node *temp = NULL;
@@ -116,7 +109,6 @@ void destroyList(CircularLinkedList *list) {
     free(list);
 }
 
-// Define Cache Simulator
 typedef struct CacheSimulator {
     CircularLinkedList *cache;
     int cache_slots;
@@ -124,7 +116,6 @@ typedef struct CacheSimulator {
     int tot_cnt;
 } CacheSimulator;
 
-// Initialize Cache Simulator
 CacheSimulator *initializeCacheSimulator(int cache_slots) {
     CacheSimulator *cacheSimulator = (CacheSimulator *)malloc(sizeof(CacheSimulator));
     cacheSimulator->cache = initializeList();
@@ -134,7 +125,6 @@ CacheSimulator *initializeCacheSimulator(int cache_slots) {
     return cacheSimulator;
 }
 
-// Perform simulation in Cache Simulator
 void doSim(CacheSimulator *cacheSimulator, char *page) {
     if (size(cacheSimulator->cache) < cacheSimulator->cache_slots) {
         if (indexOf(cacheSimulator->cache, page) != -2) {
@@ -155,7 +145,6 @@ void doSim(CacheSimulator *cacheSimulator, char *page) {
     cacheSimulator->tot_cnt++;
 }
 
-// Print statistics of Cache Simulator
 void printStats(CacheSimulator *cacheSimulator) {
     printf("cache_slot = %d, cache_hit = %d, hit ratio = %f\n",
            cacheSimulator->cache_slots,
@@ -163,7 +152,6 @@ void printStats(CacheSimulator *cacheSimulator) {
            (float)cacheSimulator->cache_hit / cacheSimulator->tot_cnt);
 }
 
-// Destroy Cache Simulator
 void destroyCacheSimulator(CacheSimulator *cacheSimulator) {
     destroyList(cacheSimulator->cache);
     free(cacheSimulator);
@@ -177,12 +165,12 @@ int main() {
     }
 
     char line[256];
-    // Cache slots loop
+
     for (int cache_slots = 100; cache_slots <= 1000; cache_slots += 100) {
-        rewind(data_file); // Move file pointer to the beginning of the file
+        rewind(data_file); 
         CacheSimulator *cache_sim = initializeCacheSimulator(cache_slots);
         while (fgets(line, sizeof(line), data_file)) {
-            // Remove trailing newline character
+      
             line[strcspn(line, "\n")] = 0;
             char *page;
             char *token = strtok(line, " ");
