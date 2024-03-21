@@ -37,3 +37,4 @@ if __name__ == "__main__":
             cache_sim.do_sim(page)
 
         cache_sim.print_stats()
+        
