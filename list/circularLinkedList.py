@@ -8,7 +8,7 @@ class CircularLinkedList:
 
     def insert(self, i:int, newItem):
         if i >= 0 and i <= self.__numItems:
-            prev = self.getNode( i - 1 )
+            prev = self.getNode(i - 1)
             newNode = ListNode(newItem, prev.next)
             prev.next = newNode
             self.__numItems += 1
@@ -56,7 +56,7 @@ class CircularLinkedList:
             return None
         
     def index(self, x) -> int:
-        curr = self.__head.next
+        curr = self.__tail.next
         for index in range(self.__numItems):
             if curr.item == x:
                 return index
@@ -77,7 +77,7 @@ class CircularLinkedList:
 
     def count(self, x) -> int:
         cnt = 0
-        curr = self.__head.next
+        curr = self.__tail.next
         while curr != None:
             if curr.item == x:
                 cnt += 1
@@ -112,7 +112,7 @@ class CircularLinkedList:
             self.append(a[index])
         
     def __findNode(self, x):
-        prev = self.__head
+        prev = self.__tail
         curr = prev.next
         while curr != None:
             if curr.item == x:
@@ -123,24 +123,24 @@ class CircularLinkedList:
         
     def getNode(self, i:int) -> ListNode:
         curr = self.__tail
-        for index in range(i+1):
+        for index in range(i + 1):
             curr = curr.next
         return curr
     
     def printList(self):
         for word in self:
-            print(word, end= " ")
-        print
+            print(word, end=" ")
+        print()
 
     def __iter__(self):
         return CircularLinkedListIterator(self)
     
 class CircularLinkedListIterator:
-    def __init__(self,alist):
-        self.__head = alist.getNode(-1)
-        self.iterPosition = self.__head.next
+    def __init__(self, alist):
+        self.__tail = alist.getNode(-1)
+        self.iterPosition = self.__tail.next
     def __next__(self):
-        if self.iterPosition == self.__head:
+        if self.iterPosition == self.__tail:
             raise StopIteration
         else:
             item = self.iterPosition.item
