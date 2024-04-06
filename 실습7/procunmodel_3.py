@@ -12,7 +12,7 @@ class PriorityQueues:
         self.queues = [ListQueue() for _ in range(num_queues)]
 
     def enqueue(self, passenger):
-        self.queues[-passenger.priority].enqueue(passenger)  # 등급이 높을수록 우선순위가 높음
+        self.queues[-passenger.priority].enqueue(passenger)  
 
     def dequeue(self):
         for queue in self.queues:
@@ -64,7 +64,7 @@ def main():
     customers = [customer.strip().split() for customer in customers]
     passengers = [Passenger(int(customer[0]), customer[1]) for customer in customers]
 
-    queues = PriorityQueues(num_queues=3)  # 등급이 1부터 3까지이므로 4개의 큐를 사용
+    queues = PriorityQueues(num_queues=3)  
 
     producer = Producer(passengers, queues)
     consumer = Consumer(queues)
