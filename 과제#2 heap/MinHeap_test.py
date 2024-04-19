@@ -6,6 +6,8 @@ minheap = MinHeap()
 minheap.insert('a', 10)
 minheap.insert('b', 5)
 minheap.insert('c', 8)
+minheap.insert('d', 18)
+
 
 print("최소값", minheap.min())  # 예상 출력: ('b', 5)
 print("요소 삭제:", minheap.deleteMin())  # 예상 출력: ('b', 5)
