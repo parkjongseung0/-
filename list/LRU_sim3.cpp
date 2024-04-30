@@ -11,14 +11,14 @@ typedef struct CircularLinkedList {
     Node *head;
     int size;
 } CircularLinkedList;
-
+//circular를 초기화 시키는 함수
 CircularLinkedList *initializeList() {
     CircularLinkedList *list = (CircularLinkedList *)malloc(sizeof(CircularLinkedList));
     list->head = NULL;
     list->size = 0;
     return list;
 }
-
+// 리스트에 새로운 노드를 추가시킴
 void append(CircularLinkedList *list, char *item) {
     Node *newNode = (Node *)malloc(sizeof(Node));
     newNode->item = strdup(item);
@@ -36,7 +36,7 @@ void append(CircularLinkedList *list, char *item) {
     }
     list->size++;
 }
-
+// 리스트에서 특정 항목을 제거시킴
 void removeItem(CircularLinkedList *list, char *item) {
     if (list->head == NULL)
         return;
@@ -46,7 +46,7 @@ void removeItem(CircularLinkedList *list, char *item) {
 
     do {
         if (strcmp(current->item, item) == 0) {
-            if (prev == NULL) { // item is in head
+            if (prev == NULL) { // head에 있는 항목을 삭제하는 경우
                 Node *last = list->head;
                 while (last->next != list->head)
                     last = last->next;
@@ -59,7 +59,7 @@ void removeItem(CircularLinkedList *list, char *item) {
                     free(current);
                     list->head = last->next;
                 }
-            } else {
+            } else { // head를 제외한(중간이나 끝)에 있는 항목을 삭제하는 경우
                 prev->next = current->next;
                 free(current->item);
                 free(current);
@@ -71,7 +71,7 @@ void removeItem(CircularLinkedList *list, char *item) {
         current = current->next;
     } while (current != list->head);
 }
-
+//리스트에서 특정 항목속에 있는 인덱스를 찾는 함수
 int indexOf(CircularLinkedList *list, char *item) {
     if (list->head == NULL)
         return -2;
@@ -92,7 +92,7 @@ int indexOf(CircularLinkedList *list, char *item) {
 int size(CircularLinkedList *list) {
     return list->size;
 }
-
+//리스트 삭제
 void destroyList(CircularLinkedList *list) {
     Node *current = list->head;
     Node *temp = NULL;
@@ -115,7 +115,7 @@ typedef struct CacheSimulator {
     int cache_hit;
     int tot_cnt;
 } CacheSimulator;
-
+//CacheSimulator 를 초기화 시킴
 CacheSimulator *initializeCacheSimulator(int cache_slots) {
     CacheSimulator *cacheSimulator = (CacheSimulator *)malloc(sizeof(CacheSimulator));
     cacheSimulator->cache = initializeList();
@@ -124,7 +124,7 @@ CacheSimulator *initializeCacheSimulator(int cache_slots) {
     cacheSimulator->tot_cnt = 1;
     return cacheSimulator;
 }
-
+//CacheSimulator 수행함수
 void doSim(CacheSimulator *cacheSimulator, char *page) {
     if (size(cacheSimulator->cache) < cacheSimulator->cache_slots) {
         if (indexOf(cacheSimulator->cache, page) != -2) {
@@ -144,7 +144,7 @@ void doSim(CacheSimulator *cacheSimulator, char *page) {
     }
     cacheSimulator->tot_cnt++;
 }
-
+//최종적인 통계값을 출력하는 함수
 void printStats(CacheSimulator *cacheSimulator) {
     printf("cache_slot = %d, cache_hit = %d, hit ratio = %f\n",
            cacheSimulator->cache_slots,
@@ -156,7 +156,7 @@ void destroyCacheSimulator(CacheSimulator *cacheSimulator) {
     destroyList(cacheSimulator->cache);
     free(cacheSimulator);
 }
-
+//메인 함수
 int main() {
     FILE *data_file = fopen("./linkbench.trc", "r");
     if (data_file == NULL) {
@@ -165,7 +165,7 @@ int main() {
     }
 
     char line[256];
-
+// 캐시 슬롯 수를 100부터 1000까지 100씩 증가하면서 테스트함
     for (int cache_slots = 100; cache_slots <= 1000; cache_slots += 100) {
         rewind(data_file); 
         CacheSimulator *cache_sim = initializeCacheSimulator(cache_slots);

@@ -56,22 +56,6 @@ class MinHeap:
         # 힙의 크기 반환
         return len(self.heap)
 
-    def heapPrint(self):
-        # 힙 출력
-        if self.is_empty():
-            print("Heap is empty")
-        else:
-            height = (len(self.heap) - 1).bit_length()
-            max_width = 2 ** height - 1
-            index = 0
-            for level in range(1, height + 1):
-                width = 2 ** (level - 1)
-                for _ in range(width):
-                    if index < len(self.heap):
-                        print(f"{self.heap[index]:^2}", end=" ")
-                        index += 1
-                print()
-
     def reorder(self, index):
         # 힙 속성을 다시 유지하기 위해 요소 재배열
         parent = (index - 1) // 2
