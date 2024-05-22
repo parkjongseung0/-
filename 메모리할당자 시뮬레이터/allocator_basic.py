@@ -18,7 +18,7 @@ class Allocator:
 if __name__ == "__main__":
     allocator = Allocator()
     
-    with open ("./input.txt", "r") as file:
+    with open ("C://Users//parkj//OneDrive//바탕 화면//숭실대//2-1//자료구조//jaryogujo//메모리할당자 시뮬레이터//input.txt", "r") as file:
         n=0
         for line in file:
             req = line.split()
@@ -33,3 +33,5 @@ if __name__ == "__main__":
             n+=1
     
     allocator.print_stats()
+
+    
