@@ -1,4 +1,5 @@
 import time
+
 class Node:
     def __init__(self, key, size, color='RED'):
         self.key = key
@@ -15,9 +16,7 @@ class RedBlackTree:
 
     def insert(self, key, size):
         node = Node(key, size)
-        node.parent = None
-        node.left = self.TNULL
-        node.right = self.TNULL
+        node.left = node.right = node.parent = self.TNULL
         node.color = 'RED'
 
         y = None
@@ -49,17 +48,6 @@ class RedBlackTree:
 
     def delete(self, key):
         self.delete_node_helper(self.root, key)
-
-    def get_best_fit(self, size):
-        best_fit = None
-        x = self.root
-        while x != self.TNULL:
-            if x.size >= size:
-                best_fit = x
-                x = x.left
-            else:
-                x = x.right
-        return best_fit
 
     def fix_insert(self, k):
         while k.parent.color == 'RED':
@@ -100,14 +88,12 @@ class RedBlackTree:
         while node != self.TNULL:
             if node.key == key:
                 z = node
-
             if node.key <= key:
                 node = node.right
             else:
                 node = node.left
 
         if z == self.TNULL:
-            print("Couldn't find key in the tree")
             return
 
         y = z
@@ -170,7 +156,7 @@ class RedBlackTree:
                     self.right_rotate(x.parent)
                     s = x.parent.left
 
-                if s.left.color == 'BLACK' and s.left.color == 'BLACK':
+                if s.left.color == 'BLACK' and s.right.color == 'BLACK':
                     s.color = 'RED'
                     x = x.parent
                 else:
@@ -188,7 +174,7 @@ class RedBlackTree:
         x.color = 'BLACK'
 
     def rb_transplant(self, u, v):
-        if u.parent == None:
+        if u.parent is None:
             self.root = v
         elif u == u.parent.left:
             u.parent.left = v
@@ -201,14 +187,18 @@ class RedBlackTree:
             node = node.left
         return node
 
+    def maximum(self, node):
+        while node.right != self.TNULL:
+            node = node.right
+        return node
+
     def left_rotate(self, x):
         y = x.right
         x.right = y.left
         if y.left != self.TNULL:
             y.left.parent = x
-
         y.parent = x.parent
-        if x.parent == None:
+        if x.parent is None:
             self.root = y
         elif x == x.parent.left:
             x.parent.left = y
@@ -222,9 +212,8 @@ class RedBlackTree:
         x.left = y.right
         if y.right != self.TNULL:
             y.right.parent = x
-
         y.parent = x.parent
-        if x.parent == None:
+        if x.parent is None:
             self.root = y
         elif x == x.parent.right:
             x.parent.right = y
@@ -233,21 +222,119 @@ class RedBlackTree:
         y.right = x
         x.parent = y
 
-
 class Allocator:
     def __init__(self):
-        self.chunk_size = 16 * 1024  # 16KB
-        self.arena = []  # 실제 할당된 메모리 청크의 시작 주소를 저장하는 리스트
-        self.used_chunks = {}  # {id: (start, size)}
-        self.free_chunks = RedBlackTree()  # Red-Black Tree for free chunks
-        self.total_allocated = 0  # total allocated memory size
+        self.chunk_size = 16 * 1024  # Base chunk size
+        self.arena = 0  # Total memory allocated as an integer
+        self.used_chunks = {}  # Maps id to (start, size)
+        self.free_chunks = RedBlackTree()  # Red-Black Tree for managing free space
+        self.size_map = {}  # HashMap for quick access to size-based chunks
+        self.total_allocated = 0  # Total allocated memory size
         self.start_time = time.time()
 
-        # Initialize with one big free chunk
-        self.free_chunks.insert(0, self.chunk_size)
+    def request_chunk_from_os(self, size):
+        necessary_size = ((size + self.chunk_size - 1) // self.chunk_size) * self.chunk_size
+        start = self.arena
+        self.arena += necessary_size
+        self.add_free_chunk(start, necessary_size)
+        return start
+
+    def add_free_chunk(self, start, size):
+        if size not in self.size_map:
+            self.size_map[size] = []
+        self.size_map[size].append(start)
+        self.free_chunks.insert(start, size)
+
+    def remove_free_chunk(self, start, size):
+        if size in self.size_map and start in self.size_map[size]:
+            self.size_map[size].remove(start)
+            if not self.size_map[size]:
+                del self.size_map[size]
+        self.free_chunks.delete(start)
+
+    def malloc(self, id, size):
+        if size > self.chunk_size:
+            start = self.arena
+            self.arena += size
+            self.used_chunks[id] = (start, size)
+            self.total_allocated += size
+            return
+
+        best_fit_size = next((s for s in sorted(self.size_map.keys()) if s >= size), None)
+        if best_fit_size is None:
+            self.request_chunk_from_os(size)
+            best_fit_size = next((s for s in sorted(self.size_map.keys()) if s >= size), None)
+
+        if best_fit_size is not None:
+            start = self.size_map[best_fit_size].pop(0)
+            if not self.size_map[best_fit_size]:
+                del self.size_map[best_fit_size]
+            remaining_size = best_fit_size - size
+            self.remove_free_chunk(start, best_fit_size)
+            if remaining_size > 0:
+                self.add_free_chunk(start + size, remaining_size)
+            self.used_chunks[id] = (start, size)
+            self.total_allocated += size
+        else:
+            print("Memory allocation failed for id:", id, "with size:", size)
+
+    def free(self, id):
+        if id in self.used_chunks:
+            start, size = self.used_chunks.pop(id)
+            self.total_allocated -= size
+            self.add_free_chunk(start, size)  # 병합 없이 자유 목록에 청크 추가
+
+
+    def merge_free_chunks(self, start, size):
+        merged_start, merged_size = start, size
+        left_node = self.get_adjacent_left_free_chunk(start)
+        right_node = self.get_adjacent_right_free_chunk(start + size)
+
+        if left_node:
+            merged_start = left_node.key
+            merged_size += left_node.size
+            self.remove_free_chunk(left_node.key, left_node.size)
+
+        if right_node:
+            merged_size += right_node.size
+            self.remove_free_chunk(right_node.key, right_node.size)
+
+        self.add_free_chunk(merged_start, merged_size)
+
+    def compact_arena(self):
+        largest_free = self.free_chunks.get_largest_free_chunk()
+        if largest_free and largest_free.key + largest_free.size == self.arena:
+            self.arena -= largest_free.size
+            self.remove_free_chunk(largest_free.key, largest_free.size)
+
+    def get_adjacent_left_free_chunk(self, start):
+        current = self.free_chunks.root
+        closest = None
+        while current != self.free_chunks.TNULL:
+            if current.key + current.size == start:
+                closest = current
+                break
+            elif current.key + current.size < start:
+                current = current.right
+            else:
+                current = current.left
+        return closest
+
+    def get_adjacent_right_free_chunk(self, end):
+        current = self.free_chunks.root
+        closest = None
+        while current != self.free_chunks.TNULL:
+            if current.key == end:
+                closest = current
+                break
+            elif current.key < end:
+                current = current.right
+            else:
+                current = current.left
+        return closest
 
     def print_stats(self):
-        total_arena = len(self.arena) * self.chunk_size / 1024 / 1024  # MB
+        total_arena = self.arena / 1024 / 1024  # MB
         in_use = self.total_allocated / 1024 / 1024  # MB
         utilization = in_use / total_arena if total_arena > 0 else 0
         end_time = time.time()
@@ -256,62 +343,27 @@ class Allocator:
         print(f"Arena: {total_arena:.2f} MB")
         print(f"In-use: {in_use:.2f} MB")
         print(f"Utilization: {utilization:.2f}")
-        print(len(self.arena))
-        print(self.used_chunks)
-
-    def malloc(self, id, size):
-        node = self.free_chunks.get_best_fit(size)
-
-        if node:
-            start = node.key
-            remaining_size = node.size - size
-            if remaining_size > 0:
-                self.free_chunks.insert(start + size, remaining_size)
-            self.free_chunks.delete(node.key)
-            self.used_chunks[id] = (start, size)
-            self.total_allocated += size
-        else:
-            new_chunk_start = len(self.arena) * self.chunk_size
-            self.arena.append([0] * self.chunk_size)
-            self.free_chunks.insert(new_chunk_start + size, self.chunk_size - size)
-            self.used_chunks[id] = (new_chunk_start, size)
-            self.total_allocated += size
-
-    def free(self, id):
-        if id in self.used_chunks:
-            start, size = self.used_chunks.pop(id)
-            self.total_allocated -= size
-            self.free_chunks.insert(start, size)
-            # Consider merging adjacent free chunks for better utilization
+        #print(self.used_chunks)
 
 if __name__ == "__main__":
     allocator = Allocator()
-    start_time=time.time()
-    # 테스트 케이스 추가
-    test_requests = [
-        ('a', 1, 1024),
-        ('a', 2, 2048),
-        ('a', 3, 3072),
-        ('a', 4, 4096),
-        ('f', 2),
-        ('a', 5, 1536),
-        ('f', 1),
-        ('a', 6, 512),
-        ('a', 7, 7168),
-        ('f', 4),
-        ('a', 8, 1024),
-        ('a', 9, 4096),
-        ('a', 10, 6144),
-        ('a', 11, 2048),
-        ('a', 12, 4096),
-        ('a', 13, 2048),
-        ('a', 14, 1024)
-    ]
+    with open("C://Users//parkj//OneDrive//바탕 화면//숭실대//2-1//자료구조//jaryogujo//메모리할당자 시뮬레이터//input.txt", "r") as file:
+        n = 0
+        for line in file:
+            req = line.split()
+            if req[0] == 'a':
+                allocator.malloc(int(req[1]), int(req[2]))
+            elif req[0] == 'f':
+                allocator.free(int(req[1]))
 
-    for req in test_requests:
-        if req[0] == 'a':
-            allocator.malloc(req[1], req[2])
-        elif req[0] == 'f':
-            allocator.free(req[1])
-        # print(req)
+            # if n % 1000 == 0:
+            #     print(n, "...")
+            
+            n += 1
+    
     allocator.print_stats()
+
+# Execution Time: 2.26 seconds
+# Arena: 163.05 MB
+# In-use: 162.19 MB
+# Utilization: 0.99
